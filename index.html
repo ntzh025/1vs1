@@ -2615,6 +2615,229 @@ scene.onBeforeRender=function(){
   }
 };
 })();
+  /* ============ MIRAGE ADDON v4 ============
+   Вставь ПОСЛЕ mirage_addon_v2.js (внутри <script type="module">, над </script>).
+   v3 (GLB) не нужен.
+   Даёт: детальные модели оружия, врагов-воксельных бойцов как в лобби, матч на 2 минуты
+   с табло и счётом, новый прицел, прыжок выше, набор «основное + пистолет + нож».
+========================================= */
+(()=>{
+const $=id=>document.getElementById(id);
+const MATCH_MS=120000, JUMP_V=7.4;
+
+/* ---------- 1. Детальное оружие ---------- */
+const GI={common:0,rare:.7,epic:1.3,legendary:1.9};
+function detailed(type,skin,tex){
+  const g=new THREE.Group(),glow=[];
+  const bodyM=metal(skin.body,.4),
+        woodM=(type==='ak'||type==='awp')?wood(skin.stock):metal(skin.stock,.5),
+        accM=metal(skin.accent,.3),dk=metal(0x0b0b0b,.5),steel=metal(0x3a3d42,.35);
+  if(tex){bodyM.map=tex;bodyM.color.set(0xffffff);bodyM.metalness=.3;bodyM.roughness=.45;
+    bodyM.emissiveMap=tex;bodyM.emissive.set(0xffffff);bodyM.emissiveIntensity=.4;}
+  const P=(w,h,d,m,x,y,z,rx=0)=>{const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);
+    o.position.set(x,y,z);o.rotation.x=rx;o.castShadow=true;g.add(o);return o;};
+  const Z=(r1,r2,l,m,x,y,z)=>{const o=new THREE.Mesh(new THREE.CylinderGeometry(r1,r2,l,14),m);
+    o.rotation.x=Math.PI/2;o.position.set(x,y,z);o.castShadow=true;g.add(o);return o;};
+  let gx=.036,gl=.28;
+  if(type==='ak'){
+    P(.062,.1,.36,bodyM,0,0,0);P(.056,.022,.34,bodyM,0,.06,0);
+    Z(.0125,.0125,.52,steel,0,.028,-.46);P(.042,.052,.04,steel,0,.03,-.5);Z(.011,.011,.28,steel,0,.07,-.36);
+    P(.052,.06,.22,woodM,0,0,-.3);P(.048,.03,.2,woodM,0,.05,-.3);
+    P(.012,.04,.012,dk,0,.06,-.7);Z(.019,.019,.07,dk,0,.028,-.75);
+    P(.05,.13,.07,bodyM,0,-.11,.04,.15);P(.05,.11,.07,bodyM,0,-.21,.08,.35);
+    P(.042,.13,.055,woodM,0,-.11,.2,.28);P(.05,.11,.3,woodM,0,-.03,.46,-.04);P(.056,.12,.02,dk,0,-.035,.62);
+    P(.008,.03,.1,steel,0,-.07,.1);P(.03,.02,.06,dk,0,.078,-.12);P(.02,.02,.1,steel,0,.086,-.2);
+    P(.016,.016,.04,dk,.036,.03,-.02);P(.003,.07,.18,steel,.032,0,.02);
+  }else if(type==='m4'){
+    P(.058,.07,.3,bodyM,0,-.03,.05);P(.056,.075,.34,bodyM,0,.035,-.02);
+    P(.03,.018,.28,accM,0,.085,0);P(.025,.04,.03,dk,0,.1,.12);
+    Z(.036,.036,.34,bodyM,0,.02,-.38);P(.012,.012,.3,accM,0,.062,-.38);
+    Z(.011,.011,.2,steel,0,.02,-.66);P(.02,.06,.03,dk,0,.05,-.56);Z(.018,.018,.07,dk,0,.02,-.78);
+    P(.045,.14,.06,bodyM,0,-.115,.02,.1);P(.04,.12,.05,dk,0,-.1,.17,.3);
+    Z(.02,.02,.2,dk,0,-.01,.34);P(.05,.09,.2,bodyM,0,-.04,.5);P(.052,.1,.02,dk,0,-.04,.61);
+    P(.03,.02,.04,dk,0,.065,.22);P(.008,.03,.09,steel,0,-.07,.1);
+  }else if(type==='mp5'){
+    P(.055,.075,.32,bodyM,0,0,0);P(.06,.05,.2,bodyM,0,-.01,-.2);Z(.012,.012,.18,steel,0,.01,-.4);
+    P(.02,.04,.02,dk,0,.045,-.46);Z(.018,.018,.05,dk,0,.01,-.49);
+    P(.036,.13,.05,bodyM,0,-.1,0,-.15);P(.036,.1,.05,bodyM,0,-.2,-.04,-.3);
+    P(.038,.12,.05,dk,0,-.09,.14,.2);P(.035,.035,.22,dk,0,0,.3);P(.04,.1,.025,dk,0,-.01,.43);
+    P(.03,.02,.03,dk,0,.05,.1);P(.008,.03,.08,steel,0,-.065,.06);gl=.2;
+  }else if(type==='deagle'){
+    P(.052,.07,.34,bodyM,0,.025,-.03);for(let i=0;i<4;i++)P(.054,.05,.004,dk,0,.03,.1+i*.014);
+    P(.044,.05,.1,bodyM,0,.01,-.3);Z(.016,.016,.03,dk,0,.01,-.37);P(.02,.008,.34,accM,0,.064,-.03);
+    P(.05,.04,.3,bodyM,0,-.03,-.02);P(.045,.13,.07,dk,0,-.11,.12,-.15);P(.008,.04,.08,steel,0,-.07,0);
+    P(.01,.02,.02,dk,0,.04,.155);P(.01,.02,.01,dk,0,.068,-.3);P(.03,.012,.012,dk,0,.066,.14);
+    P(.044,.01,.07,dk,0,-.18,.12);gl=.22;gx=.027;
+  }else if(type==='awp'){
+    Z(.017,.017,.7,steel,0,.02,-.65);Z(.03,.03,.09,dk,0,.02,-.97);P(.07,.01,.05,dk,0,.04,-.97);
+    P(.065,.09,.42,bodyM,0,0,0);Z(.008,.008,.07,dk,.045,.03,.12);
+    const ball=new THREE.Mesh(new THREE.SphereGeometry(.014,8,8),dk);ball.position.set(.08,.03,.12);g.add(ball);
+    const sc=metal(0x111111,.4);Z(.027,.027,.34,sc,0,.115,-.02);Z(.038,.033,.07,sc,0,.115,-.22);Z(.034,.028,.06,sc,0,.115,.19);
+    P(.03,.04,.03,dk,0,.085,-.1);P(.03,.04,.03,dk,0,.085,.1);P(.024,.024,.04,dk,0,.15,-.02);
+    const lens=new THREE.Mesh(new THREE.CircleGeometry(.033,16),new THREE.MeshStandardMaterial({color:0x4488ff,emissive:0x2244aa,emissiveIntensity:.7,metalness:.95,roughness:.05}));
+    lens.position.set(0,.115,-.26);lens.rotation.y=Math.PI;g.add(lens);
+    P(.06,.08,.3,woodM,0,-.04,-.3);P(.06,.12,.45,woodM,0,-.03,.5);P(.055,.04,.22,woodM,0,.04,.5);P(.065,.15,.03,dk,0,-.03,.73);
+    P(.04,.08,.1,dk,0,-.09,0);P(.008,.04,.1,steel,0,-.08,.12);gl=.3;
+  }
+  const I=GI[skin.rarity||'common'];
+  if(I>0){
+    const m=new THREE.MeshStandardMaterial({color:skin.accent,emissive:skin.accent,emissiveIntensity:I,metalness:.3,roughness:.4});
+    m.userData.base=I;glow.push(m);
+    for(const s of[-1,1]){const o=new THREE.Mesh(new THREE.BoxGeometry(.003,.018,gl),m);o.position.set(s*gx,.0,-.02);g.add(o);}
+  }
+  g.userData.glow=glow;return g;
+}
+const _bg4=buildGunByType;
+buildGunByType=function(type,skin){
+  const g=_bg4(type,skin);
+  if(type==='knife')return g;
+  let tex=null;g.traverse(o=>{if(!tex&&o.isMesh&&o.material&&o.material.map)tex=o.material.map;});
+  g.children.forEach(o=>{if(o.isMesh&&o!==g.userData.flash)o.visible=false;});
+  const d=detailed(type,skin,tex);g.add(d);
+  g.userData.glow=(g.userData.glow||[]).concat(d.userData.glow);
+  return g;
+};
+for(const k of WEAPON_ORDER)applySkinToModel(k,save.applied[k]||SKINS[k][0].id);
+setActiveGun(player.weapon);
+
+/* набор у каждого: основное + пистолет + нож */
+for(const k of['deagle','knife'])if(!save.inventory.includes(k))save.inventory.push(k);
+if(!['ak','m4','mp5','awp'].some(k=>save.inventory.includes(k)))save.inventory.push('ak');
+writeSave();renderWeaponBar();
+
+/* ---------- 2. Воксельные враги ---------- */
+function pxTex(base,v,n,face){
+  const c=document.createElement('canvas');c.width=c.height=n;const g=c.getContext('2d');
+  const r=base>>16&255,gg=base>>8&255,b=base&255;
+  for(let y=0;y<n;y++)for(let x=0;x<n;x++){const s=rnd(-v,v)|0;
+    g.fillStyle=`rgb(${clamp(r+s,0,255)},${clamp(gg+s,0,255)},${clamp(b+s,0,255)})`;g.fillRect(x,y,1,1);}
+  if(face)face(g);
+  const t=new THREE.CanvasTexture(c);t.magFilter=THREE.NearestFilter;t.minFilter=THREE.NearestFilter;t.colorSpace=THREE.SRGBColorSpace;return t;
+}
+function buildVox(shirt,pants){
+  const mats=[],vm=(b,v,n=8,f)=>{const m=new THREE.MeshStandardMaterial({map:pxTex(b,v,n,f),roughness:.9});mats.push(m);return m;};
+  const g=new THREE.Group();
+  const S=vm(0xe0a878,10),SH=vm(shirt,16),P=vm(pants,12),HR=vm(0x2a1a10,18),SO=vm(0x222222,8),DK=vm(0x2a2a2a,6);
+  const FACE=vm(0xe0a878,8,16,f=>{f.fillStyle='#111';f.fillRect(2,6,12,3);f.fillStyle='#ff4d4d';f.fillRect(3,6,3,2);f.fillRect(10,6,3,2);
+    f.fillStyle='#7a3b2a';f.fillRect(6,12,4,1);});
+  const box=(w,h,d,m,x,y,z,p=g)=>{const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);p.add(o);return o;};
+  const legs=[];
+  for(const x of[-.13,.13]){const l=new THREE.Group();l.position.set(x,.75,0);box(.24,.6,.26,P,0,-.3,0,l);box(.26,.15,.3,SO,0,-.68,.02,l);g.add(l);legs.push(l);}
+  box(.5,.75,.3,SH,0,1.125,0);box(.52,.08,.32,DK,0,.78,0);box(.36,.5,.14,DK,0,1.15,-.22);
+  box(.5,.5,.5,[S,S,HR,S,FACE,HR],0,1.75,0);box(.54,.12,.54,HR,0,2.03,0);box(.54,.3,.12,HR,0,1.9,-.22);
+  const mkArm=x=>{const a=new THREE.Group();a.position.set(x,1.45,0);a.rotation.order='YXZ';
+    box(.22,.4,.22,SH,0,-.2,0,a);box(.2,.3,.2,S,0,-.55,0,a);g.add(a);return a;};
+  g.userData={armL:mkArm(-.37),armR:mkArm(.37),legL:legs[0],legR:legs[1],mats};
+  return g;
+}
+const GS={ak:.75,m4:.75,mp5:.9,awp:.55,deagle:1.2};
+function pose(v,g,k){
+  const u=v.userData;u.armL.scale.y=1;
+  if(k==='knife'){g.scale.setScalar(1.5);g.position.set(.12,1.12,.72);g.rotation.set(-.5,Math.PI,0);
+    u.armR.rotation.set(-1.0,-.1,0);u.armL.rotation.set(0,0,.08);}
+  else if(k==='deagle'){g.scale.setScalar(GS[k]);g.position.set(.02,1.15,.62);g.rotation.set(0,Math.PI,0);
+    u.armR.rotation.set(-1.15,-.1,0);u.armL.rotation.set(-1.2,.25,0);}
+  else{g.scale.setScalar(GS[k]||.75);g.position.set(0,1.17,.76);g.rotation.set(0,Math.PI,0);
+    u.armR.rotation.set(-.9,-.3,0);u.armL.rotation.set(-1.35,.45,0);u.armL.scale.y=1.4;}
+}
+enemyModel.traverse(o=>{if(o.isMesh)o.visible=false;});   // старая модель остаётся только как хитбокс
+enemyModel.userData.head.scale.setScalar(1.45);
+const ev=buildVox(0xc0392b,0x3a2f2a);ev.scale.setScalar(1.17);enemyModel.add(ev);
+let egSig='',egun=null;
+function setEnemyGun(k){
+  if(!WEAPONS[k])k='ak';if(egSig===k)return;egSig=k;
+  if(egun)ev.remove(egun);
+  const g=buildGunByType(k,SKINS[k][0]);g.children.filter(o=>o.isGroup).forEach(o=>g.remove(o));
+  pose(ev,g,k);ev.add(g);egun=g;
+}
+setEnemyGun('ak');
+
+/* ---------- 3. Табло, время, прицел, CSS ---------- */
+const st=document.createElement('style');
+st.textContent=`
+#kills-panel{display:none!important;}
+#killfeed{top:100px!important;}
+#tb{position:absolute;left:50%;top:max(10px,env(safe-area-inset-top));transform:translateX(-50%);text-align:center;
+  padding:6px 26px 8px;border-radius:0 0 18px 18px;background:rgba(10,15,25,.7);backdrop-filter:blur(10px);
+  border:1px solid rgba(255,255,255,.12);border-top:none;font-weight:900;min-width:190px;}
+#tb-t{font-size:30px;letter-spacing:3px;line-height:1.1;font-variant-numeric:tabular-nums;}
+#tb-t.low{color:#ff4d4d;animation:tbp .5s infinite alternate;}
+@keyframes tbp{to{opacity:.45;}}
+#tb-s{display:flex;justify-content:center;align-items:baseline;gap:14px;font-size:24px;margin-top:2px;}
+#tb-s i{font-style:normal;color:#8fa4bd;}
+#tb-me{color:#4dabf7;}#tb-en{color:#ff6b6b;}
+#tb-s span.lead{text-shadow:0 0 14px currentColor;font-size:30px;}
+#tb-l{font-size:10px;letter-spacing:2px;color:#8fa4bd;margin-top:1px;}
+#crosshair{width:120px!important;height:120px!important;--g:6px;}
+#crosshair .cl{position:absolute;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.75),0 0 8px rgba(126,231,135,.9);border-radius:1px;}
+#crosshair .cl.t,#crosshair .cl.b{left:50%;width:3px;height:11px;transform:translateX(-50%);}
+#crosshair .cl.l,#crosshair .cl.r{top:50%;height:3px;width:11px;transform:translateY(-50%);}
+#crosshair .cl.t{top:calc(50% - var(--g) - 11px);}#crosshair .cl.b{top:calc(50% + var(--g));}
+#crosshair .cl.l{left:calc(50% - var(--g) - 11px);}#crosshair .cl.r{left:calc(50% + var(--g));}
+#crosshair .cd{position:absolute;left:50%;top:50%;width:4px;height:4px;border-radius:50%;background:#ff3b3b;
+  transform:translate(-50%,-50%);box-shadow:0 0 0 1px rgba(0,0,0,.8),0 0 8px #ff3b3b;}
+`;
+document.head.appendChild(st);
+const tb=document.createElement('div');tb.id='tb';
+tb.innerHTML='<div id="tb-t">2:00</div><div id="tb-s"><span id="tb-me">0</span><i>:</i><span id="tb-en">0</span></div><div id="tb-l">ВЫ — ВРАГ</div>';
+$('hud').appendChild(tb);
+const xh=$('crosshair');
+xh.innerHTML='<i class="cl t"></i><i class="cl b"></i><i class="cl l"></i><i class="cl r"></i><i class="cd"></i>';
+
+/* ---------- 4. Матч на время ---------- */
+let endAt=0,forceEnd=false;
+const _sm=startMatch;
+startMatch=function(mode){_sm(mode);endAt=performance.now()+MATCH_MS;};
+const _sgo=showGameOver;
+showGameOver=function(win){
+  // старое правило «до 5» отключаем: игра идёт до конца времени
+  if(!forceEnd&&gameState==='playing'&&endAt&&!player.alive&&(player.kills>=5||player.deaths>=5)){respawnPlayer();return;}
+  forceEnd=false;_sgo(win);
+};
+function finishMatch(){
+  endAt=0;clearInterval(pRespT);shooting=false;
+  const k=player.kills,d=player.deaths;
+  forceEnd=true;_sgo(k>d);
+  if(k===d){const t=$('over-title');t.textContent='НИЧЬЯ';t.className='over-title';t.style.color='#ffc107';}
+  else $('over-title').style.color='';
+}
+
+/* ---------- 5. Каждый кадр ---------- */
+let wasG=true,cg=6;
+const _obr=scene.onBeforeRender;
+scene.onBeforeRender=function(...a){
+  _obr.apply(this,a);
+  const now=performance.now(),playing=gameState==='playing';
+  if(!playing)return;
+  // прыжок выше
+  if(wasG&&!player.onGround&&player.velY>0&&player.velY<JUMP_V)player.velY=JUMP_V;
+  wasG=player.onGround;
+  // время и счёт
+  if(endAt){
+    const left=Math.max(0,endAt-now),s=Math.ceil(left/1000);
+    const tEl=$('tb-t');tEl.textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
+    tEl.classList.toggle('low',s<=10);
+    if(left<=0)finishMatch();
+  }
+  const me=player.kills,en=player.deaths;
+  $('tb-me').textContent=me;$('tb-en').textContent=en;
+  $('tb-me').classList.toggle('lead',me>en);$('tb-en').classList.toggle('lead',en>me);
+  $('tb-l').textContent=me>en?'ВЫ ВЕДЁТЕ':en>me?'ВРАГ ВЕДЁТ':'РАВНЫЙ СЧЁТ';
+  // прицел: расходится при ходьбе, прыжке и стрельбе
+  const mv=joy.active?Math.hypot(joy.dx,joy.dy)>.15:!!(keys.KeyW||keys.KeyA||keys.KeyS||keys.KeyD);
+  let tg=5+(mv?6:0)+(player.onGround?0:9)+(now-player.lastShot<130?8:0);
+  tg*=1-player.adsAmount*.5;cg+=(tg-cg)*.3;xh.style.setProperty('--g',cg.toFixed(1)+'px');
+  // враг: ноги, оружие, вспышка попадания
+  const eu=enemyModel.userData;
+  ev.userData.legL.rotation.x=eu.legL.rotation.x;ev.userData.legR.rotation.x=eu.legR.rotation.x;
+  ev.scale.y=1.17*(1-.25*enemy.crouchAmount);
+  let k=enemy.weapon||'ak';
+  if(enemy.isBot){const d=Math.hypot(enemy.pos.x-player.pos.x,enemy.pos.z-player.pos.z);
+    k=d<3.5?'knife':(enemy.hp<35?'deagle':'ak');}
+  setEnemyGun(k);
+  const hot=enemy.hitFlash>0;for(const m of ev.userData.mats)m.emissive.setHex(hot?0x772222:0);
+};
+})();
   requestAnimationFrame(loop);  
 </script>  
 </body>  
