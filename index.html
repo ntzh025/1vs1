@@ -1,4 +1,3 @@
-html  
 <!DOCTYPE html>  
 <html lang="ru">  
 <head>  
@@ -2029,7 +2028,7 @@ initAmmo();updateHUD();syncSettingsUI();
 document.getElementById('crosshair').classList.toggle('hidden',!save.settings.showCrosshair);  
 /* ================= MIRAGE ADDON =================
    Вставь ЭТОТ блок в игру прямо перед строкой:  requestAnimationFrame(loop);
-   (в самом конце <script type="module">). Больше ничего менять не нужно.
+   (в самом конце [модульный скрипт]). Больше ничего менять не нужно.
    Что даёт: 3D-лобби как в CS, анимации оружия/ножей, детализация оружия и бойцов.
 ================================================== */
 (()=>{
@@ -2615,8 +2614,8 @@ scene.onBeforeRender=function(){
   }
 };
 })();
-  /* ============ MIRAGE ADDON v4 ============
-   Вставь ПОСЛЕ mirage_addon_v2.js (внутри <script type="module">, над </script>).
+/* ============ MIRAGE ADDON v4 ============
+   Вставь ПОСЛЕ mirage_addon_v2.js (внутри [модульный скрипт], над [конец скрипта]).
    v3 (GLB) не нужен.
    Даёт: детальные модели оружия, врагов-воксельных бойцов как в лобби, матч на 2 минуты
    с табло и счётом, новый прицел, прыжок выше, набор «основное + пистолет + нож».
@@ -2635,9 +2634,9 @@ function detailed(type,skin,tex){
   if(tex){bodyM.map=tex;bodyM.color.set(0xffffff);bodyM.metalness=.3;bodyM.roughness=.45;
     bodyM.emissiveMap=tex;bodyM.emissive.set(0xffffff);bodyM.emissiveIntensity=.4;}
   const P=(w,h,d,m,x,y,z,rx=0)=>{const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);
-    o.position.set(x,y,z);o.rotation.x=rx;o.castShadow=true;g.add(o);return o;};
+    o.position.set(x,y,z);o.rotation.x=rx;g.add(o);return o;};
   const Z=(r1,r2,l,m,x,y,z)=>{const o=new THREE.Mesh(new THREE.CylinderGeometry(r1,r2,l,14),m);
-    o.rotation.x=Math.PI/2;o.position.set(x,y,z);o.castShadow=true;g.add(o);return o;};
+    o.rotation.x=Math.PI/2;o.position.set(x,y,z);g.add(o);return o;};
   let gx=.036,gl=.28;
   if(type==='ak'){
     P(.062,.1,.36,bodyM,0,0,0);P(.056,.022,.34,bodyM,0,.06,0);
@@ -2837,9 +2836,26 @@ scene.onBeforeRender=function(...a){
   setEnemyGun(k);
   const hot=enemy.hitFlash>0;for(const m of ev.userData.mats)m.emissive.setHex(hot?0x772222:0);
 };
+
+/* ---------- 6. Производительность (лаги на iPad) ---------- */
+renderer.setPixelRatio(Math.min(devicePixelRatio,isTouch?1.5:2));
+const lobbyG4=scene.children.find(o=>o.isGroup&&o.position.x===1000);
+const arenaL=[],lobbyL=[];
+scene.children.forEach(o=>{if(o!==lobbyG4)o.traverse(x=>{if(x.isPointLight)arenaL.push(x);});});
+lobbyG4.traverse(x=>{if(x.isPointLight)lobbyL.push(x);});
+const FL=new THREE.PointLight(0xffcc66,0,6);scene.add(FL);   // одна постоянная вспышка вместо создания/удаления света
+let flT=0;
+fireMuzzleFlash=function(pos){FL.position.copy(pos);FL.intensity=12;clearTimeout(flT);flT=setTimeout(()=>{FL.intensity=0;},60);};
+const _obr2=scene.onBeforeRender;
+scene.onBeforeRender=function(...a){
+  const pl=gameState==='playing';
+  lobbyG4.visible=!pl;arenaL.forEach(l=>l.visible=pl);FL.visible=pl;
+  lobbyL.forEach((l,i)=>{l.visible=!pl&&i<2;});
+  sun.castShadow=pl;
+  _obr2.apply(this,a);
+};
 })();
   requestAnimationFrame(loop);  
 </script>  
 </body>  
-</html>  
-```  
+</html>
