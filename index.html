@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>MIRAGE 1v1 — Skins & Roulette</title>
+<title>MIRAGE 1v1 — Custom Controls & Reload</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 html,body{width:100%;height:100%;overflow:hidden;background:#000;color:#e6edf3;
@@ -14,6 +14,7 @@ canvas{display:block;position:fixed;inset:0;width:100%;height:100%;}
 #vignette{position:fixed;inset:0;pointer-events:none;z-index:3;
   background:radial-gradient(circle at 50% 50%, transparent 45%, rgba(0,0,0,0.38) 100%);
   mix-blend-mode:multiply;}
+
 #scope{position:fixed;inset:0;pointer-events:none;z-index:4;display:none;opacity:0;
   transition:opacity .08s;
   background:radial-gradient(circle at 50% 50%,
@@ -28,6 +29,7 @@ canvas{display:block;position:fixed;inset:0;width:100%;height:100%;}
 .scope-v{left:50%;top:50%;width:1.5px;height:62vmin;transform:translate(-50%,-50%);}
 .scope-dot{position:absolute;left:50%;top:50%;width:5px;height:5px;background:#ff2222;
   border-radius:50%;transform:translate(-50%,-50%);box-shadow:0 0 8px #ff2222;}
+
 #hud{position:fixed;inset:0;pointer-events:none;z-index:5;display:none;}
 #hud.on{display:block;}
 #crosshair{position:absolute;left:50%;top:50%;width:24px;height:24px;
@@ -40,6 +42,7 @@ canvas{display:block;position:fixed;inset:0;width:100%;height:100%;}
   background:#ff4d4d;border-radius:50%;transform:translate(-50%,-50%);
   box-shadow:0 0 8px #ff4d4d;}
 #crosshair.hidden{opacity:0;}
+
 .panel{position:absolute;background:rgba(10,15,25,.55);
   backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
   border:1px solid rgba(255,255,255,.1);border-radius:14px;
@@ -62,6 +65,7 @@ canvas{display:block;position:fixed;inset:0;width:100%;height:100%;}
 #crouch-indicator{position:absolute;left:20px;bottom:70px;font-size:11px;
   color:#ffc107;letter-spacing:2px;opacity:0;transition:opacity .2s;}
 #crouch-indicator.on{opacity:1;}
+
 #hitmarker{position:absolute;left:50%;top:50%;width:22px;height:22px;
   transform:translate(-50%,-50%) rotate(45deg);opacity:0;transition:opacity .1s;}
 #hitmarker::before,#hitmarker::after{content:'';position:absolute;background:#fff;
@@ -70,12 +74,21 @@ canvas{display:block;position:fixed;inset:0;width:100%;height:100%;}
 #hitmarker::after{left:0;top:50%;width:100%;height:2px;transform:translateY(-50%);}
 #hitmarker.on{opacity:1;}
 #hitmarker.head::before,#hitmarker.head::after{background:#ffc107;box-shadow:0 0 8px #ffc107;}
+
+#kill-popup{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%) scale(0.5);
+  font-size:clamp(30px,8vw,60px);font-weight:900;color:#ffc107;opacity:0;
+  text-shadow:0 0 20px rgba(255,193,7,.8), 0 4px 10px rgba(0,0,0,.9);
+  pointer-events:none;letter-spacing:4px;transition:all .3s cubic-bezier(0.175, 0.885, 0.32, 1.275);}
+#kill-popup.on{opacity:1;transform:translate(-50%,-50%) scale(1);}
+#kill-popup .headshot{color:#ff4d4d;font-size:0.7em;display:block;text-align:center;}
+
 #killfeed{position:absolute;left:50%;top:22px;transform:translateX(-50%);
   font-size:15px;font-weight:800;text-align:center;padding:8px 20px;
   background:rgba(10,15,25,.7);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
   border:1px solid rgba(255,255,255,.1);border-radius:30px;
   opacity:0;transition:opacity .3s;letter-spacing:1px;white-space:nowrap;}
 #killfeed.on{opacity:1;}
+
 #deadmsg{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
   font-size:clamp(24px,7vw,44px);font-weight:900;color:#ff4d4d;display:none;
   text-align:center;letter-spacing:3px;text-shadow:0 4px 30px rgba(0,0,0,.95);}
@@ -83,21 +96,25 @@ canvas{display:block;position:fixed;inset:0;width:100%;height:100%;}
 #damage-flash{position:absolute;inset:0;
   background:radial-gradient(circle,rgba(255,0,0,0) 40%,rgba(255,0,0,.7) 100%);
   opacity:0;transition:opacity .1s;pointer-events:none;}
+
 #touch{position:fixed;inset:0;pointer-events:none;z-index:6;display:none;}
 #touch.on{display:block;}
 #joy{position:absolute;left:22px;bottom:22px;width:140px;height:140px;border-radius:50%;
   background:rgba(255,255,255,.05);border:2px solid rgba(255,255,255,.18);
-  pointer-events:auto;touch-action:none;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
+  pointer-events:auto;touch-action:none;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  transition:left .3s, right .3s;}
 #joy .knob{position:absolute;left:50%;top:50%;width:60px;height:60px;border-radius:50%;
   background:radial-gradient(circle,rgba(126,231,135,.7),rgba(126,231,135,.4));
   border:2px solid rgba(126,231,135,.9);transform:translate(-50%,-50%);
   pointer-events:none;box-shadow:0 0 20px rgba(126,231,135,.4);}
-#look-zone{position:absolute;right:0;top:0;width:55%;height:100%;pointer-events:auto;}
+#look-zone{position:absolute;right:0;top:0;width:55%;height:100%;pointer-events:auto;
+  transition:left .3s, right .3s;}
+
 .tbtn{position:absolute;border-radius:50%;background:rgba(255,255,255,.1);
   border:2px solid rgba(255,255,255,.28);color:#fff;display:flex;
   align-items:center;justify-content:center;pointer-events:auto;font-weight:900;
   touch-action:none;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
-  transition:transform .1s,background .1s;font-size:20px;}
+  transition:transform .1s,background .1s,left .3s, right .3s;font-size:20px;}
 .tbtn:active,.tbtn.active{background:rgba(255,255,255,.28);transform:scale(.94);}
 #btn-fire{right:20px;bottom:20px;width:96px;height:96px;font-size:38px;
   background:rgba(255,77,77,.28);border-color:rgba(255,77,77,.6);}
@@ -109,6 +126,16 @@ canvas{display:block;position:fixed;inset:0;width:100%;height:100%;}
 #btn-crouch.active{background:rgba(255,193,7,.4);border-color:rgba(255,193,7,.8);}
 #btn-reload{right:24px;bottom:130px;width:58px;height:58px;font-size:24px;}
 #btn-jump{right:204px;bottom:108px;width:58px;height:58px;font-size:22px;}
+
+/* Left-handed layout overrides */
+#touch.left-handed #joy{left:auto;right:22px;}
+#touch.left-handed #look-zone{right:auto;left:0;}
+#touch.left-handed #btn-fire{right:auto;left:20px;}
+#touch.left-handed #btn-ads{right:auto;left:130px;}
+#touch.left-handed #btn-crouch{right:auto;left:130px;}
+#touch.left-handed #btn-reload{right:auto;left:24px;}
+#touch.left-handed #btn-jump{right:auto;left:204px;}
+
 .screen{position:fixed;inset:0;display:flex;flex-direction:column;
   align-items:center;justify-content:flex-start;gap:16px;padding:26px 20px;z-index:10;
   background:radial-gradient(circle at 50% 30%,#2a1f14,#0a0705 78%);overflow-y:auto;}
@@ -133,6 +160,7 @@ h2{font-size:22px;letter-spacing:3px;font-weight:900;
   border:2px solid rgba(255,255,255,.15);box-shadow:none;}
 .btn.small{padding:10px 20px;font-size:13px;min-width:0;letter-spacing:1px;}
 .btn:disabled{opacity:.4;box-shadow:none;cursor:not-allowed;}
+
 .settings-list{width:100%;max-width:520px;display:flex;flex-direction:column;gap:14px;margin-top:8px;}
 .setting{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);
   border-radius:12px;padding:14px 18px;display:flex;flex-direction:column;gap:8px;}
@@ -144,8 +172,6 @@ h2{font-size:22px;letter-spacing:3px;font-weight:900;
 .setting input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;
   width:20px;height:20px;border-radius:50%;background:#ffc107;cursor:pointer;
   box-shadow:0 0 10px rgba(255,193,7,.5);}
-.setting input[type=range]::-moz-range-thumb{width:20px;height:20px;
-  border-radius:50%;background:#ffc107;border:none;cursor:pointer;}
 .toggle-row{display:flex;align-items:center;justify-content:space-between;}
 .toggle{position:relative;width:50px;height:26px;background:rgba(255,255,255,.15);
   border-radius:13px;cursor:pointer;transition:.2s;}
@@ -153,11 +179,19 @@ h2{font-size:22px;letter-spacing:3px;font-weight:900;
 .toggle::after{content:'';position:absolute;left:3px;top:3px;width:20px;height:20px;
   border-radius:50%;background:#fff;transition:.2s;}
 .toggle.on::after{left:27px;}
+
+.keybind-btn{background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.2);
+  color:#fff;border-radius:8px;padding:6px 12px;font-family:monospace;font-size:13px;
+  cursor:pointer;min-width:100px;text-align:center;transition:.1s;}
+.keybind-btn:hover{background:rgba(255,255,255,.1);}
+.keybind-btn.listening{background:#ffc107;color:#000;border-color:#ffc107;
+  animation:pulse 1s infinite;}
+@keyframes pulse{0%{opacity:1;}50%{opacity:0.5;}100%{opacity:1;}}
+
 .crystals-bar{display:flex;align-items:center;gap:8px;padding:10px 20px;
   background:rgba(126,231,135,.1);border:1px solid rgba(126,231,135,.3);
   border-radius:30px;font-size:15px;font-weight:800;color:#7ee787;margin-bottom:8px;}
-.cases-row{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;
-  width:100%;max-width:720px;}
+.cases-row{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;width:100%;max-width:720px;}
 .case-card{flex:1 1 200px;max-width:240px;display:flex;flex-direction:column;
   align-items:center;gap:8px;padding:18px 14px;border-radius:18px;cursor:pointer;
   background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02));
@@ -168,6 +202,7 @@ h2{font-size:22px;letter-spacing:3px;font-weight:900;
 .case-card .cname{font-size:15px;font-weight:900;letter-spacing:2px;}
 .case-card .cprice{font-size:12px;color:#7ee787;font-weight:800;letter-spacing:1px;}
 .case-card .prizes{font-size:10px;color:#8fa4bd;text-align:center;line-height:1.5;}
+
 /* ROULETTE */
 .roulette{width:100%;max-width:560px;height:120px;position:relative;overflow:hidden;
   background:linear-gradient(180deg,#000,#111);border-radius:14px;
@@ -194,6 +229,7 @@ h2{font-size:22px;letter-spacing:3px;font-weight:900;
 .case-result.rarity-rare{color:#4dabf7;}
 .case-result.rarity-epic{color:#a78bfa;}
 .case-result.rarity-legendary{color:#ffc107;text-shadow:0 0 12px rgba(255,193,7,.6);}
+
 /* INVENTORY */
 .inventory-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
   gap:10px;width:100%;max-width:760px;}
@@ -210,6 +246,8 @@ h2{font-size:22px;letter-spacing:3px;font-weight:900;
   font-weight:900;letter-spacing:1px;}
 .inv-section-title{width:100%;max-width:760px;font-size:13px;color:#ffc107;
   letter-spacing:2px;font-weight:800;margin-top:14px;margin-bottom:2px;}
+
+/* LOBBY */
 .lobby-box{width:100%;max-width:520px;background:rgba(255,255,255,.04);
   border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:18px;
   display:flex;flex-direction:column;gap:10px;}
@@ -221,25 +259,37 @@ h2{font-size:22px;letter-spacing:3px;font-weight:900;
 .status.ok{color:#7ee787;}
 .status.warn{color:#ffc107;}
 .status.err{color:#ff4d4d;}
+
 #gameover-screen{justify-content:center;}
 .over-title{font-size:clamp(40px,11vw,72px);font-weight:900;letter-spacing:6px;
   text-align:center;line-height:1;}
 .over-title.win{color:#3ddc84;text-shadow:0 0 40px rgba(61,220,132,.5);}
 .over-title.lose{color:#ff4d4d;text-shadow:0 0 40px rgba(255,77,77,.5);}
 .over-stats{display:flex;gap:20px;font-size:14px;color:#c9d4e3;letter-spacing:1px;}
+
+/* TABS */
+.tabs{display:flex;gap:10px;margin-bottom:12px;width:100%;max-width:520px;}
+.tab{flex:1;padding:10px;text-align:center;background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.1);border-radius:10px;cursor:pointer;
+  font-weight:800;font-size:13px;letter-spacing:1px;color:#8fa4bd;transition:.15s;}
+.tab.active{background:rgba(255,193,7,.15);border-color:#ffc107;color:#ffc107;}
 </style>
 </head>
 <body>
 <canvas id="c"></canvas>
 <div id="vignette"></div>
+
 <div id="scope">
   <div class="scope-ring"></div><div class="scope-h"></div>
   <div class="scope-v"></div><div class="scope-dot"></div>
 </div>
+
 <div id="hud">
   <div id="damage-flash"></div>
   <div id="crosshair"><div class="h"></div><div class="v"></div><div class="dot"></div></div>
   <div id="hitmarker"></div>
+  <div id="kill-popup"><span id="kp-text">УБИЙСТВО</span><span id="kp-head" class="headshot"></span></div>
+  
   <div class="panel" id="hp-panel"><span class="val">100</span><span class="lbl">HP</span></div>
   <div class="panel" id="ammo-panel">
     <div class="weapon">АК-47</div>
@@ -253,6 +303,7 @@ h2{font-size:22px;letter-spacing:3px;font-weight:900;
   <div id="killfeed"></div>
   <div id="deadmsg">ВЫ ПОГИБЛИ</div>
 </div>
+
 <div id="touch">
   <div id="joy"><div class="knob"></div></div>
   <div id="look-zone"></div>
@@ -262,9 +313,10 @@ h2{font-size:22px;letter-spacing:3px;font-weight:900;
   <button id="btn-jump" class="tbtn">↑</button>
   <button id="btn-reload" class="tbtn">⟳</button>
 </div>
+
 <div id="menu" class="screen">
   <h1>MIRAGE 1v1</h1>
-  <p class="sub">Скины, рулетка, онлайн-дуэли по ссылке. Присед и прицеливание.</p>
+  <p class="sub">Кастомное управление, анимация перезарядки, скины и килл-эффекты.</p>
   <div class="crystals-bar" id="crystals-bar">💎 <span>1000</span> кристаллов</div>
   <button class="btn" id="btn-bot">🤖 Играть с ботом</button>
   <button class="btn secondary" id="btn-create-lobby">🔗 Создать лобби</button>
@@ -272,21 +324,44 @@ h2{font-size:22px;letter-spacing:3px;font-weight:900;
   <button class="btn ghost" id="btn-inventory">🎒 Инвентарь</button>
   <button class="btn ghost" id="btn-settings">⚙️ Настройки</button>
 </div>
+
+<!-- SETTINGS -->
 <div id="settings-screen" class="screen hidden">
   <h2>НАСТРОЙКИ</h2>
-  <div class="settings-list">
+  <div class="tabs">
+    <div class="tab active" data-tab="game">Игра</div>
+    <div class="tab" data-tab="controls">Управление</div>
+  </div>
+  
+  <div id="tab-game" class="settings-list">
     <div class="setting"><div class="lbl-row"><label>Чувствительность мыши</label><span class="val" id="v-sens">1.0</span></div>
       <input type="range" id="in-sens" min="0.2" max="3" step="0.1" value="1"></div>
     <div class="setting"><div class="lbl-row"><label>Чувствительность на тач</label><span class="val" id="v-tsens">1.0</span></div>
       <input type="range" id="in-tsens" min="0.2" max="3" step="0.1" value="1"></div>
-    <div class="setting"><div class="lbl-row"><label>Угол обзора</label><span class="val" id="v-fov">78</span></div>
+    <div class="setting"><div class="lbl-row"><label>Угол обзора (FOV)</label><span class="val" id="v-fov">78</span></div>
       <input type="range" id="in-fov" min="60" max="100" step="1" value="78"></div>
     <div class="setting"><div class="toggle-row"><label>Инверсия Y</label><div class="toggle" id="tog-invert"></div></div></div>
     <div class="setting"><div class="toggle-row"><label>Показывать прицел</label><div class="toggle on" id="tog-crosshair"></div></div></div>
     <div class="setting"><div class="toggle-row"><label>Вибрация</label><div class="toggle on" id="tog-haptic"></div></div></div>
   </div>
+
+  <div id="tab-controls" class="settings-list hidden">
+    <p class="sub" style="margin-bottom:10px;">Нажми на кнопку клавиши, чтобы переназначить.</p>
+    <div class="setting"><div class="lbl-row"><label>Вперёд</label><button class="keybind-btn" data-action="forward">W</button></div></div>
+    <div class="setting"><div class="lbl-row"><label>Назад</label><button class="keybind-btn" data-action="backward">S</button></div></div>
+    <div class="setting"><div class="lbl-row"><label>Влево</label><button class="keybind-btn" data-action="left">A</button></div></div>
+    <div class="setting"><div class="lbl-row"><label>Вправо</label><button class="keybind-btn" data-action="right">D</button></div></div>
+    <div class="setting"><div class="lbl-row"><label>Прыжок</label><button class="keybind-btn" data-action="jump">SPACE</button></div></div>
+    <div class="setting"><div class="lbl-row"><label>Присед</label><button class="keybind-btn" data-action="crouch">CTRL</button></div></div>
+    <div class="setting"><div class="lbl-row"><label>Перезарядка</label><button class="keybind-btn" data-action="reload">R</button></div></div>
+    <div class="setting"><div class="lbl-row"><label>Смена оружия</label><button class="keybind-btn" data-action="switch">Q</button></div></div>
+    <div class="setting" style="margin-top:10px;"><div class="toggle-row"><label>Режим «Левша» (для тача)</label><div class="toggle" id="tog-lefthanded"></div></div></div>
+  </div>
+
   <button class="btn" id="btn-settings-back">Назад</button>
 </div>
+
+<!-- CASES -->
 <div id="cases-screen" class="screen hidden">
   <h2>КЕЙСЫ</h2>
   <div class="crystals-bar" id="cases-crystals">💎 <span>1000</span> кристаллов</div>
@@ -298,18 +373,22 @@ h2{font-size:22px;letter-spacing:3px;font-weight:900;
   <div class="case-result" id="case-result"></div>
   <button class="btn" id="btn-cases-back">Назад</button>
 </div>
+
+<!-- INVENTORY -->
 <div id="inventory-screen" class="screen hidden">
   <h2>ИНВЕНТАРЬ</h2>
-  <p class="sub">Тапни по скину, чтобы надеть его на оружие.</p>
+  <p class="sub">Тапни по оружию или скину, чтобы экипировать.</p>
   <div class="inv-section-title">ОРУЖИЕ</div>
   <div class="inventory-grid" id="inventory-grid"></div>
   <div class="inv-section-title">СКИНЫ</div>
   <div class="inventory-grid" id="skins-grid"></div>
   <button class="btn" id="btn-inventory-back">Назад</button>
 </div>
+
+<!-- LOBBY -->
 <div id="lobby-screen" class="screen hidden">
   <h2>ЛОББИ</h2>
-  <p class="sub" id="lobby-sub">Отправь ссылку другу. Как только он присоединится — матч начнётся.</p>
+  <p class="sub" id="lobby-sub">Отправь ссылку другу.</p>
   <div class="lobby-box">
     <label>ССЫЛКА</label>
     <div class="link-box">
@@ -322,14 +401,18 @@ h2{font-size:22px;letter-spacing:3px;font-weight:900;
   <div class="status" id="lobby-status">Генерация...</div>
   <button class="btn ghost" id="btn-lobby-back">Отмена</button>
 </div>
+
+<!-- JOIN -->
 <div id="join-screen" class="screen hidden">
   <h2>ПРИСОЕДИНИТЬСЯ</h2>
-  <p class="sub">Тебя пригласили в лобби. Нажми, чтобы подключиться.</p>
+  <p class="sub">Тебя пригласили в лобби.</p>
   <div class="lobby-box"><label>КОД ЛОББИ</label><input type="text" id="join-code" readonly></div>
   <div class="status" id="join-status">Готов к подключению...</div>
   <button class="btn" id="btn-join-connect">Подключиться</button>
   <button class="btn ghost" id="btn-join-cancel">Отмена</button>
 </div>
+
+<!-- GAMEOVER -->
 <div id="gameover-screen" class="screen hidden">
   <div class="over-title" id="over-title">ПОБЕДА</div>
   <div class="over-stats">
@@ -339,6 +422,7 @@ h2{font-size:22px;letter-spacing:3px;font-weight:900;
   <button class="btn" id="btn-rematch">Реванш</button>
   <button class="btn ghost" id="btn-gameover-menu">В меню</button>
 </div>
+
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script type="module">
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
@@ -372,6 +456,7 @@ function sfx(type){
     buy:{type:'sine',f0:600,f1:1200,dur:.25,vol:.1},
     case:{type:'triangle',f0:500,f1:1500,dur:.4,vol:.08},
     win:{type:'sine',f0:440,f1:880,dur:.5,vol:.1},
+    headshot:{type:'square',f0:1200,f1:200,dur:.15,vol:.08},
   }[type];
   if(!P)return;
   o.type=P.type;
@@ -384,13 +469,19 @@ function sfx(type){
 }
 
 /* SAVE */
-const STORAGE_KEY='mirage_save_v3';
+const STORAGE_KEY='mirage_save_v4';
+const defaultControls={
+  forward:'KeyW', backward:'KeyS', left:'KeyA', right:'KeyD',
+  jump:'Space', crouch:'ControlLeft', reload:'KeyR', switch:'KeyQ'
+};
 const save={
   crystals:1000,
   inventory:['ak','knife'],
   equipped:'ak',
-  skins:['ak_default','knife_default'],   // id'ы скинов в инвентаре
+  skins:['ak_default','knife_default'],
   applied:{ak:'ak_default',knife:'knife_default'},
+  controls:{...defaultControls},
+  lefthanded:false,
   settings:{sens:1.0,tsens:1.0,fov:78,invertY:false,showCrosshair:true,haptic:true}
 };
 function loadSave(){
@@ -400,7 +491,7 @@ function loadSave(){
       const s=JSON.parse(raw);
       Object.assign(save,s);
       save.settings=Object.assign({sens:1.0,tsens:1.0,fov:78,invertY:false,showCrosshair:true,haptic:true},s.settings||{});
-      save.applied=Object.assign({},save.applied||{});
+      save.controls=Object.assign({...defaultControls},s.controls||{});
     }
   }catch(_){}
 }
@@ -425,18 +516,18 @@ const WEAPONS={
 const WEAPON_ORDER=['ak','m4','mp5','deagle','awp','knife'];
 const RARITY_RU={common:'Обычное',rare:'Редкое',epic:'Эпическое',legendary:'Легендарное'};
 
-/* SKINS */
+/* SKINS (Based on CS:GO references) */
 const SKINS={
   ak:[
     {id:'ak_default', name:'Стандарт', rarity:'common', body:0x1a1a1a, stock:0x6b3a1a, accent:0x333333},
-    {id:'ak_redline', name:'Redline', rarity:'rare', body:0x2a0000, stock:0x1a0000, accent:0xcc0000},
-    {id:'ak_neon', name:'Neon Revolution', rarity:'epic', body:0x0a1a10, stock:0x0a0a0a, accent:0x00ff88},
+    {id:'ak_neon', name:'Neon Rider', rarity:'epic', body:0x220044, stock:0x110022, accent:0xff00ff},
+    {id:'ak_asiimov', name:'Asiimov', rarity:'rare', body:0xeeeeee, stock:0x222222, accent:0xff6600},
     {id:'ak_gold', name:'Golden Coil', rarity:'legendary', body:0xd4af37, stock:0x8b6914, accent:0xffd700},
   ],
   m4:[
     {id:'m4_default', name:'Стандарт', rarity:'common', body:0x1a1a1a, stock:0x1a1a1a, accent:0x333333},
+    {id:'m4_printstream', name:'Printstream', rarity:'legendary', body:0xffffff, stock:0xffffff, accent:0x000000},
     {id:'m4_hyper', name:'Hyper Beast', rarity:'epic', body:0x1a0a2a, stock:0x0a0a0a, accent:0xff00aa},
-    {id:'m4_asimov', name:'Asiimov', rarity:'rare', body:0xeeeeee, stock:0x222222, accent:0xff6600},
     {id:'m4_dragon', name:'Dragon King', rarity:'legendary', body:0x2a0a00, stock:0x1a0500, accent:0xff2200},
   ],
   mp5:[
@@ -447,7 +538,7 @@ const SKINS={
   deagle:[
     {id:'deagle_default', name:'Стандарт', rarity:'common', body:0x1a1a1a, stock:0x1a1a1a, accent:0x333333},
     {id:'deagle_blaze', name:'Blaze', rarity:'epic', body:0x1a0500, stock:0x1a0500, accent:0xff6600},
-    {id:'deagle_blue', name:'Cobalt', rarity:'rare', body:0x0a1a3a, stock:0x0a0a1a, accent:0x4488ff},
+    {id:'deagle_print', name:'Printstream', rarity:'legendary', body:0xffffff, stock:0xffffff, accent:0x000000},
   ],
   awp:[
     {id:'awp_default', name:'Стандарт', rarity:'common', body:0x151515, stock:0x5a3016, accent:0x333333},
@@ -460,14 +551,7 @@ const SKINS={
     {id:'knife_doppler', name:'Doppler', rarity:'legendary', body:0x22aaff, stock:0x0a0a1a, accent:0xffffff},
   ],
 };
-function findSkin(id){
-  for(const k in SKINS){const s=SKINS[k].find(x=>x.id===id);if(s)return s;}
-  return null;
-}
-function skinWeaponId(id){
-  for(const k in SKINS){if(SKINS[k].find(x=>x.id===id))return k;}
-  return null;
-}
+function findSkin(id){ for(const k in SKINS){const s=SKINS[k].find(x=>x.id===id);if(s)return s;} return null; }
 
 /* CASES */
 const CASES={
@@ -495,11 +579,13 @@ scene.fog=new THREE.Fog(0xd8c4a0,30,100);
 const camera=new THREE.PerspectiveCamera(save.settings.fov,innerWidth/innerHeight,.05,220);
 camera.rotation.order='YXZ';
 scene.add(camera);
+
 addEventListener('resize',()=>{
   renderer.setSize(innerWidth,innerHeight);
   camera.aspect=innerWidth/innerHeight;
   camera.updateProjectionMatrix();
 });
+
 scene.add(new THREE.HemisphereLight(0x88bbff,0x8b6b3e,.9));
 const sun=new THREE.DirectionalLight(0xfff2c8,3.2);
 sun.position.set(20,35,15);sun.castShadow=true;
@@ -531,10 +617,8 @@ function makeSkyTex(){
   }
   const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return t;
 }
-const skyMesh=new THREE.Mesh(
-  new THREE.SphereGeometry(150,32,16),
-  new THREE.MeshBasicMaterial({map:makeSkyTex(),side:THREE.BackSide,fog:false})
-);
+const skyMesh=new THREE.Mesh(new THREE.SphereGeometry(150,32,16),
+  new THREE.MeshBasicMaterial({map:makeSkyTex(),side:THREE.BackSide,fog:false}));
 scene.add(skyMesh);
 
 /* TEXTURES */
@@ -579,10 +663,8 @@ function makeStoneTex(base){
 const wallMeshes=[];
 const colliders=[];
 const ARENA=20;
-const ground=new THREE.Mesh(
-  new THREE.PlaneGeometry(ARENA*2,ARENA*2),
-  new THREE.MeshStandardMaterial({map:makeSandTex(),roughness:.95,metalness:.02})
-);
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(ARENA*2,ARENA*2),
+  new THREE.MeshStandardMaterial({map:makeSandTex(),roughness:.95,metalness:.02}));
 ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;scene.add(ground);
 function addBuilding(cx,cz,w,d,h,baseColor){
   const tex=makeStoneTex(baseColor);tex.repeat.set(w/3,h/3);
@@ -653,18 +735,6 @@ const rug=new THREE.Mesh(new THREE.PlaneGeometry(4,3),
   new THREE.MeshStandardMaterial({color:0x8a1a1a,roughness:.95}));
 rug.rotation.x=-Math.PI/2;rug.position.set(0,.02,0);
 rug.receiveShadow=true;scene.add(rug);
-function addLantern(x,z){
-  const g=new THREE.Group();
-  const pole=new THREE.Mesh(new THREE.CylinderGeometry(.05,.05,.8,6),
-    new THREE.MeshStandardMaterial({color:0x2a2a2a,metalness:.8}));
-  pole.position.y=.4;g.add(pole);
-  const lamp=new THREE.Mesh(new THREE.SphereGeometry(.2,12,8),
-    new THREE.MeshStandardMaterial({color:0xffcc66,emissive:0xffaa33,emissiveIntensity:1.5}));
-  lamp.position.y=.9;g.add(lamp);
-  const light=new THREE.PointLight(0xffaa33,1.2,6);light.position.y=.9;g.add(light);
-  g.position.set(x,0,z);scene.add(g);
-}
-addLantern(-6,-8);addLantern(6,-8);addLantern(-6,8);
 
 /* GUN MODELS (FP) */
 const gunHolder=new THREE.Group();camera.add(gunHolder);
@@ -686,18 +756,26 @@ function buildGunByType(type,skin){
   const stockM=wood(skin.stock);
   const accentM=metal(skin.accent,.3);
   const rArm=buildArm();const lArm=buildArm();
+  
+  let magMesh = null;
+
   if(type==='ak'){
-    const b=new THREE.Mesh(new THREE.BoxGeometry(.07,.10,.55),bodyM);b.userData.part='body';g.add(b);
+    const b=new THREE.Mesh(new THREE.BoxGeometry(.07,.10,.55),bodyM);g.add(b);
     const bar=new THREE.Mesh(new THREE.CylinderGeometry(.015,.015,.45,12),bodyM);
     bar.rotation.x=Math.PI/2;bar.position.set(0,.02,-.5);g.add(bar);
     const gas=new THREE.Mesh(new THREE.CylinderGeometry(.01,.01,.3,8),accentM);
     gas.rotation.x=Math.PI/2;gas.position.set(0,.055,-.35);g.add(gas);
     const hg=new THREE.Mesh(new THREE.BoxGeometry(.055,.06,.22),stockM);
     hg.position.set(0,.02,-.35);g.add(hg);
+    
+    magMesh=new THREE.Group();
     const m1=new THREE.Mesh(new THREE.BoxGeometry(.05,.13,.07),stockM);
-    m1.position.set(0,-.11,.05);m1.rotation.x=.15;g.add(m1);
+    m1.position.set(0,-.11,.05);m1.rotation.x=.15;magMesh.add(m1);
     const m2=new THREE.Mesh(new THREE.BoxGeometry(.05,.1,.07),stockM);
-    m2.position.set(0,-.20,.10);m2.rotation.x=.35;g.add(m2);
+    m2.position.set(0,-.20,.10);m2.rotation.x=.35;magMesh.add(m2);
+    magMesh.position.set(0,0,0);
+    g.add(magMesh);
+
     const stock=new THREE.Mesh(new THREE.BoxGeometry(.055,.09,.28),stockM);
     stock.position.set(0,-.02,.42);g.add(stock);
     const butt=new THREE.Mesh(new THREE.BoxGeometry(.06,.11,.04),accentM);
@@ -709,13 +787,15 @@ function buildGunByType(type,skin){
     rArm.position.set(.06,-.16,.28);g.add(rArm);
     lArm.position.set(-.02,-.14,-.3);lArm.rotation.y=Math.PI;g.add(lArm);
   }else if(type==='m4'){
-    const b=new THREE.Mesh(new THREE.BoxGeometry(.07,.10,.55),bodyM);b.userData.part='body';g.add(b);
+    const b=new THREE.Mesh(new THREE.BoxGeometry(.07,.10,.55),bodyM);g.add(b);
     const bar=new THREE.Mesh(new THREE.CylinderGeometry(.014,.014,.5,12),bodyM);
     bar.rotation.x=Math.PI/2;bar.position.set(0,.02,-.5);g.add(bar);
     const hg=new THREE.Mesh(new THREE.BoxGeometry(.06,.07,.35),accentM);
     hg.position.set(0,.02,-.32);g.add(hg);
-    const m=new THREE.Mesh(new THREE.BoxGeometry(.05,.13,.06),bodyM);
-    m.position.set(0,-.11,.06);m.rotation.x=.1;g.add(m);
+    
+    magMesh=new THREE.Mesh(new THREE.BoxGeometry(.05,.13,.06),bodyM);
+    magMesh.position.set(0,-.11,.06);magMesh.rotation.x=.1;g.add(magMesh);
+
     const stock=new THREE.Mesh(new THREE.BoxGeometry(.05,.08,.3),bodyM);
     stock.position.set(0,-.02,.42);g.add(stock);
     const sight=new THREE.Mesh(new THREE.BoxGeometry(.04,.06,.15),accentM);
@@ -723,26 +803,30 @@ function buildGunByType(type,skin){
     rArm.position.set(.06,-.16,.28);g.add(rArm);
     lArm.position.set(-.02,-.14,-.28);lArm.rotation.y=Math.PI;g.add(lArm);
   }else if(type==='mp5'){
-    const b=new THREE.Mesh(new THREE.BoxGeometry(.06,.09,.4),bodyM);b.userData.part='body';g.add(b);
+    const b=new THREE.Mesh(new THREE.BoxGeometry(.06,.09,.4),bodyM);g.add(b);
     const bar=new THREE.Mesh(new THREE.CylinderGeometry(.012,.012,.25,10),bodyM);
     bar.rotation.x=Math.PI/2;bar.position.set(0,.02,-.32);g.add(bar);
-    const m=new THREE.Mesh(new THREE.BoxGeometry(.04,.15,.06),bodyM);
-    m.position.set(0,-.12,.02);g.add(m);
+    
+    magMesh=new THREE.Mesh(new THREE.BoxGeometry(.04,.15,.06),bodyM);
+    magMesh.position.set(0,-.12,.02);g.add(magMesh);
+
     const stock=new THREE.Mesh(new THREE.BoxGeometry(.04,.05,.25),accentM);
     stock.position.set(0,-.01,.35);g.add(stock);
     rArm.position.set(.05,-.15,.25);g.add(rArm);
     lArm.position.set(-.02,-.12,-.22);lArm.rotation.y=Math.PI;g.add(lArm);
   }else if(type==='deagle'){
-    const b=new THREE.Mesh(new THREE.BoxGeometry(.06,.09,.35),bodyM);b.userData.part='body';g.add(b);
+    const b=new THREE.Mesh(new THREE.BoxGeometry(.06,.09,.35),bodyM);g.add(b);
     const bar=new THREE.Mesh(new THREE.CylinderGeometry(.02,.02,.15,12),accentM);
     bar.rotation.x=Math.PI/2;bar.position.set(0,.02,-.25);g.add(bar);
-    const m=new THREE.Mesh(new THREE.BoxGeometry(.04,.08,.05),bodyM);
-    m.position.set(0,-.08,.03);g.add(m);
+    
+    magMesh=new THREE.Mesh(new THREE.BoxGeometry(.04,.08,.05),bodyM);
+    magMesh.position.set(0,-.08,.03);g.add(magMesh);
+
     const grip=new THREE.Mesh(new THREE.BoxGeometry(.05,.14,.05),bodyM);
     grip.position.set(0,-.1,.15);grip.rotation.x=-.1;g.add(grip);
     rArm.position.set(.04,-.16,.15);g.add(rArm);
   }else if(type==='awp'){
-    const b=new THREE.Mesh(new THREE.BoxGeometry(.07,.10,.7),bodyM);b.userData.part='body';g.add(b);
+    const b=new THREE.Mesh(new THREE.BoxGeometry(.07,.10,.7),bodyM);g.add(b);
     const bar=new THREE.Mesh(new THREE.CylinderGeometry(.018,.018,.6,12),bodyM);
     bar.rotation.x=Math.PI/2;bar.position.set(0,.02,-.65);g.add(bar);
     const sb=new THREE.Mesh(new THREE.CylinderGeometry(.035,.035,.35,16),accentM);
@@ -753,6 +837,10 @@ function buildGunByType(type,skin){
     lens.position.set(0,.115,-.176);lens.rotation.y=Math.PI;g.add(lens);
     const stock=new THREE.Mesh(new THREE.BoxGeometry(.06,.13,.4),stockM);
     stock.position.set(0,-.02,.5);g.add(stock);
+    
+    magMesh=new THREE.Mesh(new THREE.BoxGeometry(.05,.08,.08),bodyM);
+    magMesh.position.set(0,-.06,.05);g.add(magMesh);
+
     rArm.position.set(.06,-.16,.3);g.add(rArm);
     lArm.position.set(-.02,-.12,-.25);lArm.rotation.y=Math.PI;g.add(lArm);
   }else{ // knife
@@ -766,8 +854,11 @@ function buildGunByType(type,skin){
     handle.position.set(0,.01,.09);g.add(handle);
     rArm.position.set(.02,-.16,.1);rArm.rotation.z=.3;g.add(rArm);
   }
+  
+  g.userData.magMesh = magMesh;
   return g;
 }
+
 const gunModels={};
 for(const k of WEAPON_ORDER){
   const defaultSkin=SKINS[k][0];
@@ -808,15 +899,15 @@ function setActiveGun(w){
   applyGunPose(w);
 }
 
-/* PLAYER MODEL (3rd person) */
+/* PLAYER MODEL (Based on image) */
 function buildPlayerModel(colors){
   const g=new THREE.Group();
   const skinM=skinMat(colors.skin);
   const shirtM=new THREE.MeshStandardMaterial({color:colors.shirt,roughness:.85});
   const pantsM=new THREE.MeshStandardMaterial({color:colors.pants,roughness:.9});
   const bootM=new THREE.MeshStandardMaterial({color:0x1a1a1a,roughness:.7,metalness:.3});
-  const vestM=new THREE.MeshStandardMaterial({color:colors.vest,roughness:.7,metalness:.2});
-  const helmM=new THREE.MeshStandardMaterial({color:colors.helmet,roughness:.6,metalness:.3});
+  const vestM=new THREE.MeshStandardMaterial({color:colors.vest,roughness:.6,metalness:.4});
+  const balaclavaM=new THREE.MeshStandardMaterial({color:0x111111,roughness:.95});
   const beltM=new THREE.MeshStandardMaterial({color:0x0a0a0a,roughness:.8,metalness:.2});
 
   const legL=new THREE.Group();
@@ -831,19 +922,17 @@ function buildPlayerModel(colors){
 
   const torso=new THREE.Mesh(new THREE.BoxGeometry(.55,.7,.32),shirtM);
   torso.position.y=1.5;torso.castShadow=true;g.add(torso);
-  const vest=new THREE.Mesh(new THREE.BoxGeometry(.58,.45,.36),vestM);
+  
+  // Тактический жилет (как на фото)
+  const vest=new THREE.Mesh(new THREE.BoxGeometry(.58,.45,.38),vestM);
   vest.position.y=1.55;vest.castShadow=true;g.add(vest);
   for(let i=0;i<3;i++){
-    const p=new THREE.Mesh(new THREE.BoxGeometry(.1,.12,.06),vestM);
-    p.position.set(-.18+i*.18,1.4,.19);g.add(p);
+    const p=new THREE.Mesh(new THREE.BoxGeometry(.1,.12,.06),beltM);
+    p.position.set(-.18+i*.18,1.4,.2);g.add(p);
   }
   const belt=new THREE.Mesh(new THREE.BoxGeometry(.58,.08,.35),beltM);
   belt.position.y=1.18;g.add(belt);
-  const radio=new THREE.Mesh(new THREE.BoxGeometry(.06,.12,.04),beltM);
-  radio.position.set(.2,1.3,-.17);g.add(radio);
-  const antenna=new THREE.Mesh(new THREE.CylinderGeometry(.004,.004,.18,4),beltM);
-  antenna.position.set(.2,1.45,-.17);g.add(antenna);
-
+  
   const armL=new THREE.Group();
   const upperArmL=new THREE.Mesh(new THREE.CylinderGeometry(.09,.1,.35,8),shirtM);
   upperArmL.position.y=-.17;upperArmL.castShadow=true;armL.add(upperArmL);
@@ -854,25 +943,23 @@ function buildPlayerModel(colors){
   armL.position.set(-.35,1.78,0);g.add(armL);
   const armR=armL.clone();armR.position.set(.35,1.78,0);g.add(armR);
 
+  // Голова и балаклава
   const head=new THREE.Mesh(new THREE.SphereGeometry(.19,16,14),skinM);
   head.position.y=2.05;head.castShadow=true;head.userData.isHead=true;g.add(head);
-  const neck=new THREE.Mesh(new THREE.CylinderGeometry(.08,.09,.1,8),skinM);
-  neck.position.y=1.9;g.add(neck);
+  
+  const balaclava=new THREE.Mesh(new THREE.SphereGeometry(.20,16,14,0,Math.PI*2,0,Math.PI*.85), balaclavaM);
+  balaclava.position.y=2.05; balaclava.castShadow=true; g.add(balaclava);
+  
   // Глаза
   const eyeL=new THREE.Mesh(new THREE.SphereGeometry(.03,8,6),
-    new THREE.MeshStandardMaterial({color:0x0a0a0a}));
-  eyeL.position.set(-.07,2.08,.16);g.add(eyeL);
+    new THREE.MeshStandardMaterial({color:0xffffff, emissive:0x333333}));
+  eyeL.position.set(-.07,2.08,.17);g.add(eyeL);
+  const pupilL=new THREE.Mesh(new THREE.SphereGeometry(.012,6,6),
+    new THREE.MeshStandardMaterial({color:0x000000}));
+  pupilL.position.set(-.07,2.08,.195);g.add(pupilL);
+  
   const eyeR=eyeL.clone();eyeR.position.x=.07;g.add(eyeR);
-  // Шлем
-  const helmet=new THREE.Mesh(
-    new THREE.SphereGeometry(.21,16,14,0,Math.PI*2,0,Math.PI*.62),helmM);
-  helmet.position.y=2.07;helmet.castShadow=true;g.add(helmet);
-  const visor=new THREE.Mesh(new THREE.BoxGeometry(.32,.04,.1),helmM);
-  visor.position.set(0,2.02,.18);g.add(visor);
-  // Наушники
-  const earL=new THREE.Mesh(new THREE.CylinderGeometry(.06,.06,.04,10),beltM);
-  earL.rotation.z=Math.PI/2;earL.position.set(-.19,2.05,0);g.add(earL);
-  const earR=earL.clone();earR.position.x=.19;g.add(earR);
+  const pupilR=pupilL.clone();pupilR.position.x=.07;g.add(pupilR);
 
   const gunGroup=new THREE.Group();
   const gb=new THREE.Mesh(new THREE.BoxGeometry(.06,.09,.6),metal(0x1a1a1a,.35));
@@ -881,7 +968,7 @@ function buildPlayerModel(colors){
   gbar.rotation.x=Math.PI/2;gbar.position.z=-.45;gunGroup.add(gbar);
   gunGroup.position.set(.15,1.55,-.3);gunGroup.rotation.x=.1;g.add(gunGroup);
 
-  g.userData={legL,legR,armL,armR,head,helmet,torso,vest,gunGroup,visor};
+  g.userData={legL,legR,armL,armR,head,torso,vest,gunGroup,balaclava};
   return g;
 }
 
@@ -892,7 +979,7 @@ const player={
   velY:0,onGround:true,yaw:Math.PI,pitch:0,
   hp:100,maxHp:100,alive:true,
   weapon:save.equipped||'ak',
-  ammo:{},lastShot:0,reloading:false,reloadEnd:0,
+  ammo:{},lastShot:0,reloading:false,reloadEnd:0,reloadDuration:0,
   kills:0,deaths:0,bobT:0,recoil:0,_semiLatch:false,
   aiming:false,adsAmount:0,crouching:false,crouchAmount:0,
 };
@@ -926,7 +1013,6 @@ function resolveCollisions(pos){
   pos.x=clamp(pos.x,-B,B);pos.z=clamp(pos.z,-B,B);
 }
 function getSpawnForRole(){
-  // host на +Z, guest на -Z, бот-режим тоже на +Z
   if(netRole==='guest')return{x:0,z:-14,yaw:0};
   return{x:0,z:14,yaw:Math.PI};
 }
@@ -960,7 +1046,7 @@ const enemy={
   hitFlash:0,respawnT:0,walkPhase:0,
 };
 const enemyModel=buildPlayerModel({
-  skin:0x8a5a3a,shirt:0x6b2a1a,pants:0x3a2010,vest:0x2a1a0a,helmet:0x1a1a1a
+  skin:0x8a5a3a,shirt:0x6b2a1a,pants:0x3a2010,vest:0xc2b280
 });
 enemyModel.visible=false;scene.add(enemyModel);
 const enemyHitMeshes=[enemyModel.userData.head,enemyModel.userData.torso,enemyModel.userData.vest];
@@ -1083,7 +1169,9 @@ function reload(){
   const w=WEAPONS[player.weapon];
   if(w.melee||player.reloading)return;
   if(player.ammo[player.weapon]>=w.mag)return;
-  player.reloading=true;player.reloadEnd=performance.now()+w.reload;
+  player.reloading=true;
+  player.reloadDuration=w.reload;
+  player.reloadEnd=performance.now()+w.reload;
   sfx('reload');updateHUD();
 }
 function switchWeapon(w){
@@ -1174,21 +1262,33 @@ function damageEnemy(dmg,isHead){
   if(!enemy.alive)return;
   const f=isHead?dmg*2:dmg;
   enemy.hp-=f;enemy.hitFlash=.12;
-  if(enemy.hp<=0)onEnemyDeath();
+  if(enemy.hp<=0)onEnemyDeath(isHead);
 }
-function onEnemyDeath(){
+function onEnemyDeath(isHead){
   enemy.alive=false;enemyModel.visible=false;
   spawnSparks(enemy.pos.clone().setY(1.2),20);
   player.kills++;updateKillsHUD();
-  showKillfeed('ВРАГ УНИЧТОЖЕН!','#3ddc84');sfx('death');
+  
+  // Show Kill Popup
+  const kp=document.getElementById('kill-popup');
+  const kpText=document.getElementById('kp-text');
+  const kpHead=document.getElementById('kp-head');
+  kpText.textContent = isHead ? 'HEADSHOT!' : 'УБИЙСТВО';
+  kpHead.textContent = isHead ? '+ 150 XP' : '';
+  kp.classList.remove('on');
+  void kp.offsetWidth; // trigger reflow
+  kp.classList.add('on');
+  setTimeout(()=>kp.classList.remove('on'), 1500);
+
+  if(isHead) sfx('headshot'); else sfx('death');
+  showKillfeed('ВРАГ УНИЧТОЖЕН!', '#3ddc84');
+
   if(enemy.isBot){
     enemy.respawnT=3;
   }else{
     if(netConn&&netConn.open){try{netConn.send({t:'kill'});}catch(_){}}
-    // ждём респавна врага, мы не заканчиваем матч
     setTimeout(()=>{
       if(gameState==='playing'&&!enemy.alive){
-        // если враг так и не прислал пакет — показываем, что он возродился
         enemy.alive=true;enemy.hp=enemy.maxHp;
         enemyModel.visible=true;
       }
@@ -1230,43 +1330,80 @@ function onPlayerDeath(){
     if(n>0)document.getElementById('deadmsg').textContent='ВЫ ПОГИБЛИ — '+n+'...';
     else{
       clearInterval(pRespT);
-      if(matchMode==='bot'||matchMode==='multi'){
-        // Завершаем матч по счёту (best of 5 kills)
-        if(player.kills>=5){showGameOver(true);return;}
-        if(player.deaths>=5){showGameOver(false);return;}
-        respawnPlayer();
-      }
+      if(player.kills>=5){showGameOver(true);return;}
+      if(player.deaths>=5){showGameOver(false);return;}
+      respawnPlayer();
     }
   },1000);
 }
 
-/* INPUT */
+/* INPUT & CUSTOM KEYBINDS */
 const keys={};
-addEventListener('keydown',e=>{
+let waitingForKey=null;
+let currentKeybindBtn=null;
+
+function handleKeyDown(e){
+  if(waitingForKey){
+    if(e.code === 'Escape'){ // отмена
+      waitingForKey = null;
+      currentKeybindBtn.classList.remove('listening');
+      currentKeybindBtn.textContent = formatKeyName(save.controls[currentKeybindBtn.dataset.action]);
+      currentKeybindBtn = null;
+      return;
+    }
+    save.controls[waitingForKey] = e.code;
+    writeSave();
+    currentKeybindBtn.textContent = formatKeyName(e.code);
+    currentKeybindBtn.classList.remove('listening');
+    waitingForKey = null;
+    currentKeybindBtn = null;
+    e.preventDefault();
+    return;
+  }
+
   keys[e.code]=true;
-  if(e.code==='KeyR')reload();
+  if(e.code===save.controls.reload)reload();
+  if(e.code===save.controls.switch)cycleWeapon();
   if(e.code==='Digit1')switchWeapon('ak');
   if(e.code==='Digit2')switchWeapon('m4');
   if(e.code==='Digit3')switchWeapon('mp5');
   if(e.code==='Digit4')switchWeapon('deagle');
   if(e.code==='Digit5')switchWeapon('awp');
   if(e.code==='Digit6')switchWeapon('knife');
-  if(e.code==='KeyQ')cycleWeapon();
-  if(e.code==='Space'&&player.onGround&&player.alive&&!player.crouching){
+  if(e.code===save.controls.jump&&player.onGround&&player.alive&&!player.crouching){
     player.velY=5.2;player.onGround=false;
   }
-  if(e.code==='ControlLeft'||e.code==='KeyC'){
+  if(e.code===save.controls.crouch){
     player.crouching=true;
     document.getElementById('crouch-indicator').classList.add('on');
   }
-});
-addEventListener('keyup',e=>{
+}
+function handleKeyUp(e){
   keys[e.code]=false;
-  if(e.code==='ControlLeft'||e.code==='KeyC'){
+  if(e.code===save.controls.crouch){
     player.crouching=false;
     document.getElementById('crouch-indicator').classList.remove('on');
   }
+}
+function formatKeyName(code){
+  return code.replace('Key','').replace('Digit','').replace('Arrow','').toUpperCase() || code;
+}
+
+addEventListener('keydown',handleKeyDown);
+addEventListener('keyup',handleKeyUp);
+
+document.querySelectorAll('.keybind-btn').forEach(btn=>{
+  const action=btn.dataset.action;
+  btn.textContent=formatKeyName(save.controls[action]);
+  btn.onclick=()=>{
+    if(waitingForKey)return;
+    waitingForKey=action;
+    currentKeybindBtn=btn;
+    btn.classList.add('listening');
+    btn.textContent='...';
+  };
 });
+
 let shooting=false;
 canvas.addEventListener('click',()=>{
   initAudio();
@@ -1294,7 +1431,9 @@ document.addEventListener('mouseup',e=>{
 });
 document.addEventListener('contextmenu',e=>e.preventDefault());
 
-/* TOUCH */
+/* TOUCH & LEFTHANDED */
+if(save.lefthanded) document.getElementById('touch').classList.add('left-handed');
+
 const joyEl=document.getElementById('joy');
 const knobEl=joyEl.querySelector('.knob');
 const joy={active:false,id:null,dx:0,dy:0,bx:0,by:0,R:70};
@@ -1328,6 +1467,7 @@ function joyEnd(e){
 }
 joyEl.addEventListener('touchend',joyEnd);
 joyEl.addEventListener('touchcancel',joyEnd);
+
 const lookEl=document.getElementById('look-zone');
 const look={active:false,id:null,lx:0,ly:0};
 lookEl.addEventListener('touchstart',e=>{
@@ -1358,6 +1498,7 @@ function lookEnd(e){
 }
 lookEl.addEventListener('touchend',lookEnd);
 lookEl.addEventListener('touchcancel',lookEnd);
+
 const btnFire=document.getElementById('btn-fire');
 btnFire.addEventListener('touchstart',e=>{
   e.preventDefault();initAudio();shooting=true;btnFire.classList.add('active');
@@ -1366,6 +1507,7 @@ btnFire.addEventListener('touchend',e=>{
   e.preventDefault();shooting=false;btnFire.classList.remove('active');
 },{passive:false});
 btnFire.addEventListener('touchcancel',()=>{shooting=false;btnFire.classList.remove('active');});
+
 document.getElementById('btn-ads').addEventListener('touchstart',e=>{
   e.preventDefault();initAudio();setAiming(!player.aiming);
 },{passive:false});
@@ -1401,10 +1543,8 @@ function handleNetData(msg){
   }else if(msg.t==='hit'){
     damagePlayer(msg.dmg||20);
   }else if(msg.t==='kill'){
-    // враг сообщает, что убил нас
     if(player.alive)onPlayerDeath();
   }else if(msg.t==='ready'){
-    // второй игрок готов — начинаем
     if(netRole==='host'){
       try{netConn.send({t:'go'});}catch(_){}
       startMatch('multi');
@@ -1424,9 +1564,7 @@ function setupConnection(conn){
     if(netRole==='host'){
       try{conn.send({t:'hello'});}catch(_){}
     }
-    // Гость ждёт 'go', хост ждёт 'ready'
     if(netRole==='guest'){
-      // guest сразу говорит ready
       try{conn.send({t:'ready'});}catch(_){}
     }
   });
@@ -1513,23 +1651,65 @@ let matchMode='bot';
 
 function updatePlayer(dt){
   if(!player.alive)return;
-  if(player.reloading&&performance.now()>=player.reloadEnd){
-    player.reloading=false;
-    player.ammo[player.weapon]=WEAPONS[player.weapon].mag;
-    updateHUD();
+  
+  // Reload logic & animation
+  if(player.reloading){
+    const now = performance.now();
+    if(now >= player.reloadEnd){
+      player.reloading=false;
+      player.ammo[player.weapon]=WEAPONS[player.weapon].mag;
+      if(gunModels[player.weapon] && gunModels[player.weapon].userData.magMesh){
+        gunModels[player.weapon].userData.magMesh.visible = true;
+      }
+      updateHUD();
+    } else {
+      // Animation
+      const progress = 1 - (player.reloadEnd - now) / player.reloadDuration;
+      const m = gunModels[player.weapon];
+      if(m){
+        // Gun tilt
+        m.rotation.z = Math.sin(progress * Math.PI) * 0.5;
+        m.position.y = GUN_POSES[player.weapon].hip.pos[1] - Math.sin(progress * Math.PI) * 0.15;
+        m.position.z = GUN_POSES[player.weapon].hip.pos[2] - Math.sin(progress * Math.PI) * 0.1;
+        
+        // Mag drop & swap
+        if(m.userData.magMesh){
+          if(progress > 0.3 && progress < 0.7){
+            m.userData.magMesh.visible = false; // Old mag drops
+          } else if(progress >= 0.7) {
+            m.userData.magMesh.visible = true; // New mag in
+            // Animate new mag sliding up
+            if(progress < 0.85){
+               m.userData.magMesh.position.y = -0.2 * (1 - (progress-0.7)/0.15);
+            } else {
+               m.userData.magMesh.position.y = 0;
+            }
+          }
+        }
+      }
+    }
+  } else {
+    // Reset gun position if not reloading
+    if(gunModels[player.weapon] && GUN_POSES[player.weapon]){
+      const p = GUN_POSES[player.weapon].hip;
+      gunModels[player.weapon].position.set(...p.pos);
+      gunModels[player.weapon].rotation.set(...p.rot);
+    }
   }
+
   const targetAds=player.aiming?1:0;
   player.adsAmount=lerp(player.adsAmount,targetAds,Math.min(1,dt*16));
   if(Math.abs(player.adsAmount-targetAds)<.001)player.adsAmount=targetAds;
+  
   const targetCrouch=player.crouching?1:0;
   player.crouchAmount=lerp(player.crouchAmount,targetCrouch,Math.min(1,dt*10));
   if(Math.abs(player.crouchAmount-targetCrouch)<.001)player.crouchAmount=targetCrouch;
 
   let fw=0,st=0;
-  if(keys['KeyW'])fw+=1;
-  if(keys['KeyS'])fw-=1;
-  if(keys['KeyD'])st+=1;
-  if(keys['KeyA'])st-=1;
+  if(keys[save.controls.forward])fw+=1;
+  if(keys[save.controls.backward])fw-=1;
+  if(keys[save.controls.right])st+=1;
+  if(keys[save.controls.left])st-=1;
   if(joy.active){fw+=-joy.dy;st+=joy.dx;}
   const mag=Math.hypot(fw,st);
   if(mag>1){fw/=mag;st/=mag;}
@@ -1549,7 +1729,7 @@ function updatePlayer(dt){
   }
 
   const w=WEAPONS[player.weapon];
-  if(shooting){
+  if(shooting && !player.reloading){
     if(w.auto)tryShoot();
     else if(!player._semiLatch){tryShoot();player._semiLatch=true;}
   }else player._semiLatch=false;
@@ -1581,7 +1761,7 @@ function updatePlayer(dt){
     }else{scopeEl.classList.remove('on');scopeEl.style.opacity=0;}
     crossEl.style.opacity=clamp(1-player.adsAmount*2,0,1);
   }else{
-    if(pose.ads){
+    if(pose.ads && !player.reloading){
       const m=gunModels[player.weapon];
       if(m){
         const hip=pose.hip,ads=pose.ads;
@@ -1595,10 +1775,12 @@ function updatePlayer(dt){
           lerp(hip.rot[1],ads.rot[1],player.adsAmount),
           lerp(hip.rot[2],ads.rot[2],player.adsAmount)
         );
-        m.position.x+=Math.cos(player.bobT*.5)*bob*.3;
-        m.position.y+=Math.sin(player.bobT)*bob*.2;
-        m.position.y-=player.crouchAmount*.02;
       }
+    }
+    if(!player.reloading && gunModels[player.weapon]){
+       gunModels[player.weapon].position.x+=Math.cos(player.bobT*.5)*bob*.3;
+       gunModels[player.weapon].position.y+=Math.sin(player.bobT)*bob*.2;
+       gunModels[player.weapon].position.y-=player.crouchAmount*.02;
     }
     crossEl.style.opacity=save.settings.showCrosshair?1:0;
     scopeEl.classList.remove('on');scopeEl.style.opacity=0;
@@ -1616,8 +1798,7 @@ function updateEnemyRemote(dt){
   enemyModel.position.y=-co*.5;
   enemyModel.userData.torso.position.y=1.5-co;
   enemyModel.userData.head.position.y=2.05-co;
-  enemyModel.userData.helmet.position.y=2.07-co;
-  enemyModel.userData.visor.position.y=2.02-co;
+  enemyModel.userData.balaclava.position.y=2.05-co;
   enemyModel.visible=enemy.alive;
 }
 
@@ -1799,7 +1980,6 @@ document.getElementById('btn-copy-link').onclick=async()=>{
 document.getElementById('btn-rematch').onclick=()=>{
   document.getElementById('gameover-screen').classList.add('hidden');
   if(matchMode==='multi'&&netConn&&netConn.open){
-    // шлём hello чтоб перезапустить рукопожатие
     try{netConn.send({t:'hello'});}catch(_){}
   }
   startMatch(matchMode==='multi'?'multi':'bot');
@@ -1813,6 +1993,15 @@ document.getElementById('btn-gameover-menu').onclick=()=>{
 };
 
 /* SETTINGS */
+document.querySelectorAll('.tab').forEach(tab=>{
+  tab.onclick=()=>{
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.settings-list').forEach(l=>l.classList.add('hidden'));
+    tab.classList.add('active');
+    document.getElementById('tab-'+tab.dataset.tab).classList.remove('hidden');
+  };
+});
+
 function syncSettingsUI(){
   document.getElementById('in-sens').value=save.settings.sens;
   document.getElementById('v-sens').textContent=save.settings.sens.toFixed(1);
@@ -1823,6 +2012,7 @@ function syncSettingsUI(){
   document.getElementById('tog-invert').classList.toggle('on',save.settings.invertY);
   document.getElementById('tog-crosshair').classList.toggle('on',save.settings.showCrosshair);
   document.getElementById('tog-haptic').classList.toggle('on',save.settings.haptic);
+  document.getElementById('tog-lefthanded').classList.toggle('on',save.lefthanded);
 }
 document.getElementById('in-sens').oninput=e=>{
   save.settings.sens=parseFloat(e.target.value);
@@ -1849,6 +2039,11 @@ document.getElementById('tog-crosshair').onclick=e=>{
 document.getElementById('tog-haptic').onclick=e=>{
   save.settings.haptic=!save.settings.haptic;
   e.currentTarget.classList.toggle('on',save.settings.haptic);
+};
+document.getElementById('tog-lefthanded').onclick=e=>{
+  save.lefthanded=!save.lefthanded;
+  e.currentTarget.classList.toggle('on',save.lefthanded);
+  document.getElementById('touch').classList.toggle('left-handed',save.lefthanded);
 };
 
 /* CASES */
